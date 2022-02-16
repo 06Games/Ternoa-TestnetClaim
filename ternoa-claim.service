@@ -1,0 +1,14 @@
+[Unit]
+Description=Ternoa - Claim testCAPS
+After=network-online.target
+
+[Service]
+Type=simple
+User=USER
+WorkingDirectory=PATH
+ExecStart=PATH/claim.sh
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target

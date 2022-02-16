@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="910408d1-8ec0-458e-9403-3f68c8f546f4" name="NAS" url="">
+        <fileTransfer mountedRoot="W:\" accessType="MOUNT" port="0" />
+      </webServer>
+    </option>
+  </component>
+</project>
