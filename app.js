@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+
+/********************
+ * Obsolete         *
+ * Won't be updated *
+ *******************/
+
 // Import the API, Keyring and some utility functions
 const { Keyring } = require('@polkadot/keyring');
 
@@ -7,12 +13,12 @@ const { Keyring } = require('@polkadot/keyring');
 const utils = require('./utils');
 
 // Transfer
-const DATA = require('./data.json');
+const DATA = require('./data-testnet.json');
 const MIN_QTE = 1000;
 const KEEP = 5;
 
 async function main() {
-    const api = utils.connectToApi();
+    const api = utils.connectToApi(utils.testnet.SUBSTRATE_URL, utils.testnet.SPEC);
     const keyring = new Keyring({ type: 'sr25519' }); // Construct the keyring after the API (crypto has an async init)
 
     for (const {transferName, receiverAddress, senders} of DATA.transfers) {
