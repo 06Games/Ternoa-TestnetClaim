@@ -27,3 +27,19 @@ exports.error = function(msg) { console.error(colors.red(msg)); }
 exports.warning = function(msg) { console.warn(colors.yellow(msg)); }
 exports.success = function(msg) { console.log(colors.green(msg)); }
 exports.info = function(msg) { console.info(colors.grey(msg)); }
+
+exports.testnet =
+    {
+        MIN_QTE: 1000,
+        MAX_QTE: 11000,
+        KEEP: 5,
+        ClaimAPI: function API(address) { return `https://ternoa-api.testnet.ternoa.com/api/faucet/claim-test-caps/${address}`; }
+    };
+exports.alphanet =
+    {
+        MIN_QTE: 10,
+        MAX_QTE: 100,
+        KEEP: 5,
+        ClaimAPI: function API(address) { return `https://ternoa-api.alphanet.ternoa.dev/api/faucet/claim-test-caps/${address}`; }
+    };
+exports.httpOptions = {headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0'}};

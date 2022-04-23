@@ -10,65 +10,95 @@ const fs = require('fs');
 // Custom modules
 const utils = require('./utils');
 
-// Transfer
-const DATA = require('./data.json');
-const MAX_QTE = 11000;
-let httpOptions = {headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0'}};
-function API(address) {
-    return `https://ternoa-api.testnet.ternoa.com/api/faucet/claim-test-caps/${address}`;
-}
-function PATH(address) {
-    return `./data/${address}.txt`;
+// Params
+const NETWORK = "alphanet";
+const DATA = require(`./data-${NETWORK}.json`);
+const DATE_PATH = './date.txt';
+
+
+/**************************
+ *         Script         *
+ **************************/
+
+function Network() {
+    if (NETWORK === "testnet") return utils.testnet;
+    else if (NETWORK === "alphanet") return utils.alphanet;
+    else if (NETWORK === "mainnet") throw new Error(`Mainnet isn't supported by this tool`);
+    else throw new Error(`Network type ${NETWORK} isn't valid`);
 }
 
 const minute = 60 * 1000;
 const delay = 24 * 60 * minute + minute; // Every day and one minute (every 24h01)
 
 async function claimAll() {
-/*    const api = await utils.connectToApi();
-    const keyring = new Keyring({type: 'sr25519'}); // Construct the keyring after the API (crypto has an async init)*/
-
     const currentDate = new Date();
+    const rateDelay = 1; // 60 min
     for (const {senders} of DATA.transfers) {
         for (const sender of senders) {
-            if (!sender.claim) continue;
+            if (!sender.claim) {
+                utils.info(`Ignoring ${sender.name}`);
+                continue;
+            }
+            utils.info(`Processing ${sender.name}`);
+
             if (sender.phrase == null) utils.warning(`${sender.name} (${sender.address}): No passphrase`);
-            /*else {
-                const account = keyring.addFromUri(sender.phrase); // Add an account, straight mnemonic
-                if (account.address !== sender.address) {
-                    utils.error(formatLog(sender, `Given passphrase isn't matching ${account.address}`));
-                    continue;
-                }
+            await sendClaimRequest(sender);
 
-                const available = await utils.getAvailableCAPS(api, account.address);
-                if (available > MAX_QTE) {
-                    utils.warning(formatLog(sender, `Balance too high (${available} CAPS > ${MAX_QTE} CAPS)`));
-                    continue;
-                }
-            }*/
-
-            sendClaimRequest(sender);
+            utils.info(`Waiting ${rateDelay} min`);
+            await new Promise(resolve => setTimeout(resolve, rateDelay * minute));
         }
     }
+
+    fs.writeFileSync(DATE_PATH, currentDate.toISOString());
     utils.info(`Next claim at ${addMilliseconds(currentDate, delay)}`);
 }
 
 function sendClaimRequest(sender) {
-    axios.get(API(sender.address), httpOptions)
+    return axios.get(Network().ClaimAPI(sender.address), utils.httpOptions)
         .then(_ => {
             utils.success(formatLog(sender, `Success`));
-            fs.writeFileSync(PATH(sender.address), new Date().toISOString());
         })
         .catch(err => {
             let msg = err;
-            if (err?.response) msg += ` (${err.response.data.errors.map(e => e.message).join(", ")})`
+            if (err?.response?.data?.errors) msg += ` (${err.response.data.errors.map(e => e.message).join(", ")})`;
+            if (err?.response?.data) msg += ` (${err.response.data})`;
             utils.error(formatLog(sender, msg));
         });
+}
+
+//TODO: Call this fct
+async function transferCAPS(api, sender, receiverAddress) {
+    const keyring = new Keyring({type: 'sr25519'}); // Construct the keyring after the API (crypto has an async init)
+    const account = keyring.addFromUri(sender.phrase);// Add an account, straight mnemonic
+    if (account.address !== sender.address) {
+        utils.error(`${sender.name}: Passphrase ${account.address} ≠ ${sender.address}`);
+        return;
+    }
+
+    // We make sure the account has a sufficient amount of CAPS
+    const available = await utils.getAvailableCAPS(api, account.address);
+    if (available < Network().MIN_QTE) {
+        utils.warning(`${sender.name} (${account.address}): Insufficient balance (${available} CAPS / ${Network().MIN_QTE} CAPS)`);
+        return;
+    }
+
+    // Create an extrinsic, transferring TRANSFER_QTE units to RECEIVER
+    const transferQTE = available - Network().KEEP;
+    const transfer = api.tx.balances.transferKeepAlive(receiverAddress, utils.convertFromDecimalCAPS(transferQTE));
+    const hash = await transfer.signAndSend(account); // Sign and send the transaction using the account
+    utils.success(`${sender.name} (${account.address}): Sent ${transferQTE} CAPS with hash ${hash.toHex()}`);
 }
 
 function formatLog(sender, message) {
     return `${sender.name} (${sender.address}): ${message}`;
 }
 
-claimAll().catch(console.error);
-setInterval(claimAll, delay); // From now on the function will be called every $delay
+function main() {
+    claimAll().catch(console.error);
+    setInterval(claimAll, delay); // From now on the function will be called every $delay
+}
+
+
+let date = fs.existsSync(DATE_PATH) ? new Date(fs.readFileSync(DATE_PATH, 'utf8')) : new Date(1970, 0);
+if (new Date() > addDays(date, 1)) main();
+else setTimeout(main, new Date() - date);

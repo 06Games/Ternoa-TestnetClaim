@@ -135,7 +135,7 @@ yarn.lock
 #  CUSTOM  #
 ############
 
-data.json
+data-*.json
 
 # Visual Studio
 *.sln
