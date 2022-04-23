@@ -1,13 +1,11 @@
 const {WsProvider, ApiPromise} = require("@polkadot/api");
 const colors = require("colors");
 
-const SUBSTRATE_URL = 'wss://testnet.ternoa.com';
-const TYPES = require("./spec_42.json");
 const DECIMALS = 18;
 
-exports.connectToApi = async function(apiURL = SUBSTRATE_URL){
+exports.connectToApi = async function(apiURL, spec){
     const provider = new WsProvider(apiURL); // Initialise the provider to connect to the local node
-    const api = await ApiPromise.create({ provider, types: TYPES }); // Create the API and wait until ready
+    const api = await ApiPromise.create({ provider, types: spec }); // Create the API and wait until ready
 
     // Retrieve the chain & node information via rpc calls
     const [chain, nodeName, nodeVersion] = await Promise.all([ api.rpc.system.chain(), api.rpc.system.name(), api.rpc.system.version() ]);
@@ -30,16 +28,20 @@ exports.info = function(msg) { console.info(colors.grey(msg)); }
 
 exports.testnet =
     {
+        SUBSTRATE_URL: 'wss://testnet.ternoa.com',
+        SPEC: require("./spec-testnet.json"),
         MIN_QTE: 1000,
         MAX_QTE: 11000,
         KEEP: 5,
-        ClaimAPI: function API(address) { return `https://ternoa-api.testnet.ternoa.com/api/faucet/claim-test-caps/${address}`; }
+        ClaimAPI: function(address) { return `https://ternoa-api.testnet.ternoa.com/api/faucet/claim-test-caps/${address}`; }
     };
 exports.alphanet =
     {
+        SUBSTRATE_URL: 'wss://alphanet.ternoa.com',
+        SPEC: require("./spec-alphanet.json"),
         MIN_QTE: 10,
         MAX_QTE: 100,
         KEEP: 5,
-        ClaimAPI: function API(address) { return `https://ternoa-api.alphanet.ternoa.dev/api/faucet/claim-test-caps/${address}`; }
+        ClaimAPI: function(address) { return `https://ternoa-api.alphanet.ternoa.dev/api/faucet/claim-test-caps/${address}`; }
     };
 exports.httpOptions = {headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0'}};

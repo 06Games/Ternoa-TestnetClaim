@@ -3,8 +3,7 @@
 // Import some utility functions
 const {Keyring} = require('@polkadot/keyring');
 const axios = require('axios');
-const schedule = require('node-schedule');
-const {addDays, addMinutes, addMilliseconds, format} = require('date-and-time');
+const {addDays, addMilliseconds} = require('date-and-time');
 const fs = require('fs');
 
 // Custom modules
