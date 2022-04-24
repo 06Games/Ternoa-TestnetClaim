@@ -136,6 +136,7 @@ yarn.lock
 ############
 
 data-*.json
+date.txt
 
 # Visual Studio
 *.sln

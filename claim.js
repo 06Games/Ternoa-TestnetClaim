@@ -3,7 +3,7 @@
 // Import some utility functions
 const {Keyring} = require('@polkadot/keyring');
 const axios = require('axios');
-const {addDays, addMilliseconds} = require('date-and-time');
+const {addDays, addMilliseconds, format} = require('date-and-time');
 const fs = require('fs');
 
 // Custom modules
@@ -60,7 +60,7 @@ function sendClaimRequest(sender) {
         .catch(err => {
             let msg = err;
             if (err?.response?.data?.errors) msg += ` (${err.response.data.errors.map(e => e.message).join(", ")})`;
-            if (err?.response?.data) msg += ` (${err.response.data})`;
+            else if (err?.response?.data) msg += ` (${err.response.data})`;
             utils.error(formatLog(sender, msg));
         });
 }
@@ -100,4 +100,8 @@ function main() {
 
 let date = fs.existsSync(DATE_PATH) ? new Date(fs.readFileSync(DATE_PATH, 'utf8')) : new Date(1970, 0);
 if (new Date() > addDays(date, 1)) main();
-else setTimeout(main, new Date() - date);
+else {
+    let nextClaim = addDays(date, 1) - new Date();
+    utils.info(`Waiting ${format(new Date(nextClaim), 'HH:mm:ss')} before starting claiming`)
+    setTimeout(main, nextClaim);
+}
