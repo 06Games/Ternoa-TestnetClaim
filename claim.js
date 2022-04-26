@@ -31,7 +31,7 @@ const delay = 24 * 60 * minute + minute; // Every day and one minute (every 24h0
 
 async function claimAll() {
     const currentDate = new Date();
-    const rateDelay = 1; // 60 min
+    const rateDelay = 60; // 60 min
     for (const {senders} of DATA.transfers) {
         for (const sender of senders) {
             if (!sender.claim) {
